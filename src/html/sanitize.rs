@@ -1,5 +1,3 @@
-pub struct Content(String);
-pub struct AttrValue(String);
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::char;
@@ -7,7 +5,13 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Content(String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AttrValue(String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AttrKey(String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HtmlBlock(String);
