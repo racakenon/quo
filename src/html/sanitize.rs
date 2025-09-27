@@ -1,5 +1,11 @@
 pub struct Content(String);
 pub struct AttrValue(String);
+use lazy_static::lazy_static;
+use serde::Deserialize;
+use std::char;
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttrKey(String);
@@ -105,43 +111,86 @@ pub fn convert_to_smart_quotes(s: &str) -> String {
     result
 }
 
-pub fn remove_extra_whitespace(s: &str) -> String {
-    s.split_whitespace().collect::<Vec<&str>>().join(" ")
-}
+mod rules {
+    use super::*;
 
-pub fn convert_selective_ascii(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            'À'..='Å' | 'Ā' | 'à'..='å' | 'ā' => {
-                result.push(if c.is_uppercase() { 'A' } else { 'a' })
+    #[derive(Deserialize, Debug)]
+    struct CodepointData(HashMap<String, Vec<u32>>);
+
+    pub struct SanitizationRules {
+        pub invisible_chars: HashSet<char>,
+        pub ambiguous_map: HashMap<char, char>,
+    }
+
+    impl SanitizationRules {
+        pub fn from_files<P: AsRef<Path>>(
+            invisible_path: P,
+            ambiguous_path: P,
+        ) -> Result<Self, Box<dyn std::error::Error>> {
+            let ambiguous_json = fs::read_to_string(ambiguous_path)?;
+            let ambiguous_data: CodepointData = serde_json::from_str(&ambiguous_json)?;
+            let mut ambiguous_map: HashMap<char, char> = HashMap::new();
+
+            let keys_to_process = ["_common", "_default"];
+            for key in keys_to_process.iter() {
+                if let Some(codepoints) = ambiguous_data.0.get(*key) {
+                    for pair in codepoints.chunks_exact(2) {
+                        if let (Some(original), Some(replacement)) =
+                            (char::from_u32(pair[0]), char::from_u32(pair[1]))
+                        {
+                            ambiguous_map.insert(original, replacement);
+                        }
+                    }
+                }
             }
-            'Ç' | 'Č' | 'ç' | 'č' => result.push(if c.is_uppercase() { 'C' } else { 'c' }),
-            'È'..='Ë' | 'Ē' | 'Ę' | 'è'..='ë' | 'ē' | 'ę' => {
-                result.push(if c.is_uppercase() { 'E' } else { 'e' })
+
+            let invisible_json = fs::read_to_string(invisible_path)?;
+            let invisible_data: CodepointData = serde_json::from_str(&invisible_json)?;
+            let mut invisible_chars: HashSet<char> = invisible_data
+                .0
+                .values()
+                .flatten()
+                .filter_map(|&codepoint| char::from_u32(codepoint))
+                .collect();
+
+            for ambiguous_char in ambiguous_map.keys() {
+                invisible_chars.remove(ambiguous_char);
             }
-            'Ì'..='Ï' | 'Ī' | 'ì'..='ï' | 'ī' => {
-                result.push(if c.is_uppercase() { 'I' } else { 'i' })
-            }
-            'Ñ' | 'ñ' => result.push(if c.is_uppercase() { 'N' } else { 'n' }),
-            'Ò'..='Ö' | 'Ø' | 'Ō' | 'ò'..='ö' | 'ø' | 'ō' => {
-                result.push(if c.is_uppercase() { 'O' } else { 'o' })
-            }
-            'Ù'..='Ü' | 'Ū' | 'ù'..='ü' | 'ū' => {
-                result.push(if c.is_uppercase() { 'U' } else { 'u' })
-            }
-            'Š' | 'š' => result.push(if c.is_uppercase() { 'S' } else { 's' }),
-            'Ý' | 'Ÿ' | 'ý' | 'ÿ' => result.push(if c.is_uppercase() { 'Y' } else { 'y' }),
-            'Ž' | 'ž' => result.push(if c.is_uppercase() { 'Z' } else { 'z' }),
-            'Æ' => result.push_str("AE"),
-            'æ' => result.push_str("ae"),
-            'Œ' => result.push_str("OE"),
-            'œ' => result.push_str("oe"),
-            'ß' => result.push_str("ss"),
-            _ => result.push(c),
+
+            Ok(SanitizationRules {
+                invisible_chars,
+                ambiguous_map,
+            })
         }
     }
-    result
+
+    lazy_static! {
+        pub static ref RULES: SanitizationRules = {
+            SanitizationRules::from_files(
+                "src/html/invisibleCharacters.json",
+                "src/html/ambiguous.json",
+            )
+            .expect("Failed to load sanitization rule files")
+        };
+    }
+}
+pub fn remove_invisible_chars(input: &str) -> String {
+    input
+        .chars()
+        .filter(|c| !rules::RULES.invisible_chars.contains(c))
+        .collect()
+}
+
+pub fn replace_ambiguous_chars(input: &str) -> String {
+    input
+        .chars()
+        .map(|c| rules::RULES.ambiguous_map.get(&c).copied().unwrap_or(c))
+        .collect()
+}
+
+pub fn sanitize_string(input: &str) -> String {
+    let without_invisible = remove_invisible_chars(input);
+    replace_ambiguous_chars(&without_invisible)
 }
 
 #[cfg(test)]
@@ -196,48 +245,23 @@ mod tests {
     }
 
     #[test]
-    fn test_whitespace_cleanup() {
-        let input = "  \t  leading and   trailing \n spaces  ";
-        let expected = "leading and trailing spaces";
-        assert_eq!(remove_extra_whitespace(input), expected);
-
-        let only_whitespace = " \n \t ";
-        assert_eq!(remove_extra_whitespace(only_whitespace), "");
+    fn test_remove_invisible() {
+        let input = "Hello\u{200B}World";
+        assert_eq!(remove_invisible_chars(input), "HelloWorld");
     }
 
     #[test]
-    fn test_selective_ascii_conversion() {
-        let input = "résumé à la carte, 안녕하세요, über-naïve";
-        let expected = "resume a la carte, 안녕하세요, uber-naive";
-        assert_eq!(convert_selective_ascii(input), expected);
+    fn test_replace_ambiguous() {
+        let input = "Русский Алфавит";
+        let expected = "Pyccкий Aлфaвит";
+        assert_eq!(replace_ambiguous_chars(input), expected);
     }
 
     #[test]
-    fn test_full_cleanup_and_sanitization_pipeline() {
-        let messy_input = r#"
-            "   Voilà, un résumé   über-cool! & check this <tag> out   "
-        "#;
+    fn test_full_sanitization() {
+        let input = "С\u{200b}АША\u{00a0}the\u{00a0}spy";
+        let expected = "CAШA the spy";
 
-        let cleaned_whitespace = remove_extra_whitespace(messy_input);
-        assert_eq!(
-            cleaned_whitespace,
-            r#"" Voilà, un résumé über-cool! & check this <tag> out ""#
-        );
-
-        let ascii_text = convert_selective_ascii(&cleaned_whitespace);
-        assert_eq!(
-            ascii_text,
-            r#"" Voila, un resume uber-cool! & check this <tag> out ""#
-        );
-
-        let smart_quoted_text = convert_to_smart_quotes(&ascii_text);
-        assert_eq!(
-            smart_quoted_text,
-            "“ Voila, un resume uber-cool! & check this <tag> out ”"
-        );
-
-        let final_content = Content::from_str(&smart_quoted_text);
-        let expected = "“ Voila, un resume uber-cool! &amp; check this &lt;tag&gt; out ”";
-        assert_eq!(final_content.into_inner(), expected);
+        assert_eq!(sanitize_string(input), expected);
     }
 }
