@@ -61,22 +61,47 @@ fn escape_html_chars(input: &str) -> String {
     }
     output
 }
-
 pub fn convert_to_smart_quotes(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
-    let mut is_open = true;
-    for c in s.chars() {
-        if c == '"' {
-            if is_open {
-                result.push('“');
-            } else {
-                result.push('”');
+    let mut is_in_double_quote = false;
+    let mut is_in_single_quote = false;
+
+    let chars: Vec<char> = s.chars().collect();
+
+    for (i, &current_char) in chars.iter().enumerate() {
+        match current_char {
+            '"' => {
+                if is_in_double_quote {
+                    result.push('”');
+                } else {
+                    result.push('“');
+                }
+                is_in_double_quote = !is_in_double_quote;
             }
-            is_open = !is_open;
-        } else {
-            result.push(c);
+            '\'' => {
+                let is_apostrophe = if i > 0 && i < chars.len() - 1 {
+                    chars[i - 1].is_alphabetic() && chars[i + 1].is_alphabetic()
+                } else {
+                    false
+                };
+
+                if is_apostrophe {
+                    result.push('’');
+                } else {
+                    if is_in_single_quote {
+                        result.push('’');
+                    } else {
+                        result.push('‘');
+                    }
+                    is_in_single_quote = !is_in_single_quote;
+                }
+            }
+            _ => {
+                result.push(current_char);
+            }
         }
     }
+
     result
 }
 
@@ -152,13 +177,22 @@ mod tests {
     }
 
     #[test]
-    fn test_smart_quotes_conversion() {
-        let input = r#""Hello," he said. "It's a test.""#;
-        let expected = "“Hello,” he said. “It's a test.”";
-        assert_eq!(convert_to_smart_quotes(input), expected);
+    fn test_smart_quotes_improved_logic() {
+        let input_1 = "It's a beautiful day.";
+        let expected_1 = "It’s a beautiful day.";
+        assert_eq!(convert_to_smart_quotes(input_1), expected_1);
 
-        let empty_quotes = r#""""#;
-        assert_eq!(convert_to_smart_quotes(empty_quotes), "“”");
+        let input_2 = "'Hello world,' she said.";
+        let expected_2 = "‘Hello world,’ she said.";
+        assert_eq!(convert_to_smart_quotes(input_2), expected_2);
+
+        let input_3 = "She replied, 'It's my cat.'";
+        let expected_3 = "She replied, ‘It’s my cat.’";
+        assert_eq!(convert_to_smart_quotes(input_3), expected_3);
+
+        let input_4 = r#""'Tis the season,' he sang.""#;
+        let expected_4 = "“‘Tis the season,’ he sang.”";
+        assert_eq!(convert_to_smart_quotes(input_4), expected_4);
     }
 
     #[test]
