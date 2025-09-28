@@ -1,5 +1,6 @@
 use quo::html::elements::{Div, H1};
 use quo::html::node::Node;
+use quo::html::renderer::{HtmlRenderer, Renderer};
 use quo::html::rules::{self, Punctuation, RuleList};
 use quo::html::trust::{AttrValue, SafeString};
 
@@ -17,10 +18,13 @@ fn main() {
         .id(AttrValue::from_str("container", &rule))
         .class(AttrValue::from_str("wrapper", &rule));
 
-    let final_html = container.rendering().into_inner();
-    println!("{}", final_html);
+    let initial_rederer = HtmlRenderer::new();
+    let final_html = container.to_irnode();
+    let temp_renderer = final_html.accept(initial_rederer);
+    println!("{}", temp_renderer.finalize());
 
     let malicious_heading = H1::new(&format!("<script>alert('XSS')</script>{elipis}"), &rule);
-    let malicious_html = malicious_heading.rendering().into_inner();
-    println!("{}", malicious_html);
+    let mailcious_html = malicious_heading.to_irnode();
+    let continue_rendering = mailcious_html.accept(temp_renderer);
+    println!("{}", continue_rendering.finalize());
 }

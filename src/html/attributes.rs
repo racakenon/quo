@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::trust;
+use crate::html::trust::{self, SafeString};
 #[derive(Clone)]
 pub enum AttrValues {
     Token(trust::AttrValue),
@@ -11,49 +11,37 @@ pub enum MergeMode {
     Keep,
     Force,
 }
-pub trait AttrMap {
-    fn new() -> Self;
-    fn add(self, k: trust::AttrKey, v: AttrValues) -> Self;
-    fn get(&self, k: &trust::AttrKey) -> Option<&AttrValues>;
-    fn all(&self) -> Vec<(trust::AttrKey, AttrValues)>;
-    fn merge<T>(self, map: T, mode: MergeMode) -> Self
-    where
-        T: AttrMap;
-}
 
 #[derive(Clone)]
 pub struct AttrHashMap {
     table: HashMap<trust::AttrKey, AttrValues>,
 }
 
-impl AttrMap for AttrHashMap {
-    fn new() -> Self {
+impl AttrHashMap {
+    pub fn new() -> Self {
         AttrHashMap {
             table: HashMap::new(),
         }
     }
 
-    fn add(self, k: trust::AttrKey, v: AttrValues) -> Self {
+    pub fn add(self, k: trust::AttrKey, v: AttrValues) -> Self {
         let mut tb = self.table;
         tb.insert(k, v);
         AttrHashMap { table: tb }
     }
 
-    fn get(&self, k: &trust::AttrKey) -> Option<&AttrValues> {
+    pub fn get(&self, k: &trust::AttrKey) -> Option<&AttrValues> {
         self.table.get(k)
     }
 
-    fn all(&self) -> Vec<(trust::AttrKey, AttrValues)> {
+    pub fn all(&self) -> Vec<(trust::AttrKey, AttrValues)> {
         self.table
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect()
     }
 
-    fn merge<T>(self, map: T, mode: MergeMode) -> Self
-    where
-        T: AttrMap,
-    {
+    pub fn merge(self, map: AttrHashMap, mode: MergeMode) -> Self {
         let mut table = self.table;
 
         match mode {
@@ -68,5 +56,23 @@ impl AttrMap for AttrHashMap {
         }
 
         AttrHashMap { table }
+    }
+
+    pub fn to_str(&self) -> String {
+        self.all()
+            .iter()
+            .map(|(k, v)| match v {
+                AttrValues::Token(val) => {
+                    let k = k.clone();
+                    let val = val.clone();
+                    format!(r#" {}="{}""#, k.to_str(), val.to_str())
+                }
+                AttrValues::Bool(true) => {
+                    let k = k.clone();
+                    format!(" {}", k.to_str())
+                }
+                _ => "".to_string(),
+            })
+            .collect()
     }
 }
