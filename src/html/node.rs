@@ -1,12 +1,12 @@
 use crate::html::attributes;
-use crate::html::sanitize;
+use crate::html::trust;
 pub trait Node: Sized {
     type Attr: attributes::AttrMap;
-    fn rendering(&self) -> sanitize::HtmlBlock;
-    fn id(self, id: sanitize::AttrValue) -> Self;
-    fn class(self, class: sanitize::AttrValue) -> Self;
-    fn alt(self, class: sanitize::AttrValue) -> Self;
-    fn title(self, class: sanitize::AttrValue) -> Self;
+    fn rendering(&self) -> trust::HtmlBlock;
+    fn id(self, id: trust::AttrValue) -> Self;
+    fn class(self, class: trust::AttrValue) -> Self;
+    fn alt(self, class: trust::AttrValue) -> Self;
+    fn title(self, class: trust::AttrValue) -> Self;
     //TODO other global attrs
 }
 

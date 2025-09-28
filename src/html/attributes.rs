@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::html::sanitize;
+use crate::html::trust;
 #[derive(Clone)]
 pub enum AttrValues {
-    Token(sanitize::AttrValue),
+    Token(trust::AttrValue),
     Bool(bool),
-    List(Vec<sanitize::AttrValue>),
+    List(Vec<trust::AttrValue>),
 }
 pub enum MergeMode {
     Keep,
@@ -13,9 +13,9 @@ pub enum MergeMode {
 }
 pub trait AttrMap {
     fn new() -> Self;
-    fn add(self, k: sanitize::AttrKey, v: AttrValues) -> Self;
-    fn get(&self, k: &sanitize::AttrKey) -> Option<&AttrValues>;
-    fn all(&self) -> Vec<(sanitize::AttrKey, AttrValues)>;
+    fn add(self, k: trust::AttrKey, v: AttrValues) -> Self;
+    fn get(&self, k: &trust::AttrKey) -> Option<&AttrValues>;
+    fn all(&self) -> Vec<(trust::AttrKey, AttrValues)>;
     fn merge<T>(self, map: T, mode: MergeMode) -> Self
     where
         T: AttrMap;
@@ -23,7 +23,7 @@ pub trait AttrMap {
 
 #[derive(Clone)]
 pub struct AttrHashMap {
-    table: HashMap<sanitize::AttrKey, AttrValues>,
+    table: HashMap<trust::AttrKey, AttrValues>,
 }
 
 impl AttrMap for AttrHashMap {
@@ -33,17 +33,17 @@ impl AttrMap for AttrHashMap {
         }
     }
 
-    fn add(self, k: sanitize::AttrKey, v: AttrValues) -> Self {
+    fn add(self, k: trust::AttrKey, v: AttrValues) -> Self {
         let mut tb = self.table;
         tb.insert(k, v);
         AttrHashMap { table: tb }
     }
 
-    fn get(&self, k: &sanitize::AttrKey) -> Option<&AttrValues> {
+    fn get(&self, k: &trust::AttrKey) -> Option<&AttrValues> {
         self.table.get(k)
     }
 
-    fn all(&self) -> Vec<(sanitize::AttrKey, AttrValues)> {
+    fn all(&self) -> Vec<(trust::AttrKey, AttrValues)> {
         self.table
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
