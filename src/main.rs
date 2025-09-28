@@ -1,4 +1,4 @@
-use quo::html::elements::{Div, H1};
+use quo::html::elements::{Div, H1, H2};
 use quo::html::node::Node;
 use quo::html::renderer::{HtmlRenderer, Renderer};
 use quo::html::rules::{self, Punctuation, RuleList};
@@ -23,7 +23,7 @@ fn main() {
     let temp_renderer = final_html.accept(initial_rederer);
     println!("{}", temp_renderer.finalize());
 
-    let malicious_heading = H1::new(&format!("<script>alert('XSS')</script>{elipis}"), &rule);
+    let malicious_heading = H2::new(&format!("<script>alert('XSS')\"qi'to 'I know' \"</script>{elipis}"), &rule);
     let mailcious_html = malicious_heading.to_irnode();
     let continue_rendering = mailcious_html.accept(temp_renderer);
     println!("{}", continue_rendering.finalize());

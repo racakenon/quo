@@ -24,7 +24,7 @@ impl H1 {
 impl Node for H1 {
     fn to_irnode(&self) -> IRNode {
         IRNode::new(
-            TagName::from_str("div"),
+            TagName::from_str("h1"),
             self.attrs.clone(),
             Some(self.content.clone()),
             false,
