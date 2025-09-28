@@ -127,18 +127,21 @@ pub enum RuleList {
     Punctuation,
     //TODO add more rules pair with Rules
 }
-
-pub trait Rules: Sized {
-    fn ellipsis(&self) -> char {
+pub trait Punctuation {
+    fn ellipsis() -> char {
         '…'
     }
-    fn en_dash(&self) -> char {
+    fn en_dash() -> char {
         '–'
     }
-    fn em_dash(&self) -> char {
+    fn em_dash() -> char {
         '–'
     }
     //TODO diagraph symbols offer
+}
+
+pub trait Rules: Sized {
+    type Punctuations: Punctuation;
     fn apply(&self, input: &str) -> String;
     fn replace_ambiguous_chars(&self, input: &str) -> String;
     fn remove_invisible_chars(&self, input: &str) -> String;
@@ -149,7 +152,18 @@ pub trait Rules: Sized {
 pub struct Default {
     pub rules: Vec<RuleList>,
 }
+
+pub enum DefaultPunc {
+    Ellipsis,
+    En,
+    Em,
+}
+
+impl Punctuation for DefaultPunc {}
+
 impl Rules for Default {
+    type Punctuations = DefaultPunc;
+
     fn apply(&self, input: &str) -> String {
         let mut result = String::from_str(input).unwrap();
         for rule in self.rules.iter() {
