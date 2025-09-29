@@ -21,7 +21,7 @@ pub trait SafeString: Sized {
     fn from_str<T>(s: &str, rule: &T) -> Self
     where
         T: rules::Rules;
-    fn to_str(self) -> String;
+    fn to_str(&self) -> String;
 }
 impl Display for Content {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -49,8 +49,8 @@ impl Display for HtmlBlock {
     }
 }
 impl SafeString for Content {
-    fn to_str(self) -> String {
-        self.0
+    fn to_str(&self) -> String {
+        self.0.clone()
     }
 
     fn from_str<T>(s: &str, rule: &T) -> Self
@@ -63,8 +63,8 @@ impl SafeString for Content {
 }
 
 impl SafeString for AttrValue {
-    fn to_str(self) -> String {
-        self.0
+    fn to_str(&self) -> String {
+        self.0.clone()
     }
 
     fn from_str<T>(s: &str, rule: &T) -> Self
@@ -89,8 +89,8 @@ impl HtmlBlock {
     pub(crate) fn from_str(block: &str) -> Self {
         HtmlBlock(block.to_string())
     }
-    pub fn to_str(self) -> String {
-        self.0
+    pub fn to_str(&self) -> String {
+        self.0.clone()
     }
 }
 
