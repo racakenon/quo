@@ -1,7 +1,7 @@
-use crate::html::attributes::{AttrHashMap, AttrValues};
+use crate::html::attributes::{AttrHashMap, Attributes, Global, Image};
 use crate::html::node::{Element, ElementType, FlowContent, Heading, IRNode, Node};
 use crate::html::rules::{self, Rules};
-use crate::html::trust::{self, AttrKey, SafeString, TagName};
+use crate::html::trust::{self, SafeString, TagName};
 
 #[derive(Clone)]
 pub struct H1 {
@@ -10,12 +10,12 @@ pub struct H1 {
 }
 
 impl H1 {
-    pub fn new<T>(text: &str, rule: &T) -> Self
+    pub fn new<T>(text: &str, rule: &T, attrs: Attributes<Global>) -> Self
     where
         T: Rules,
     {
         H1 {
-            attrs: AttrHashMap::new(),
+            attrs: attrs.table,
             content: trust::Content::from_str(text, rule),
         }
     }
@@ -30,35 +30,6 @@ impl Node for H1 {
             vec![Element::Text(self.content.clone())],
         )
     }
-    fn id(self, id: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("id"), AttrValues::Token(id)),
-            ..self
-        }
-    }
-
-    fn class(self, class: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("class"), AttrValues::Token(class)),
-            ..self
-        }
-    }
-
-    fn alt(self, _alt: trust::AttrValue) -> Self {
-        self
-    }
-    fn title(self, title: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("title"), AttrValues::Token(title)),
-            ..self
-        }
-    }
 }
 
 impl FlowContent for H1 {}
@@ -71,12 +42,12 @@ pub struct H2 {
 }
 
 impl H2 {
-    pub fn new<T>(text: &str, rule: &T) -> Self
+    pub fn new<T>(text: &str, rule: &T, attrs: Attributes<Global>) -> Self
     where
         T: rules::Rules,
     {
         H2 {
-            attrs: AttrHashMap::new(),
+            attrs: attrs.table,
             content: trust::Content::from_str(text, rule),
         }
     }
@@ -91,35 +62,6 @@ impl Node for H2 {
             vec![Element::Text(self.content.clone())],
         )
     }
-    fn id(self, id: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("id"), AttrValues::Token(id)),
-            ..self
-        }
-    }
-
-    fn class(self, class: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("class"), AttrValues::Token(class)),
-            ..self
-        }
-    }
-
-    fn alt(self, _alt: trust::AttrValue) -> Self {
-        self
-    }
-    fn title(self, title: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("title"), AttrValues::Token(title)),
-            ..self
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -129,10 +71,13 @@ pub struct Div {
 }
 
 impl Div {
-    pub fn new<T: FlowContent>(children: Vec<T>) -> Self {
+    pub fn new(children: Vec<Box<dyn FlowContent>>, attr: Attributes<Global>) -> Self {
         Div {
-            attrs: AttrHashMap::new(),
-            childs: children.iter().map(|c| Element::Node(c.to_irnode())).collect(),
+            attrs: attr.table,
+            childs: children
+                .iter()
+                .map(|c| Element::Node(c.to_irnode()))
+                .collect(),
         }
     }
 }
@@ -146,35 +91,26 @@ impl Node for Div {
             self.childs.clone(),
         )
     }
-    fn id(self, id: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("id"), AttrValues::Token(id)),
-            ..self
-        }
-    }
-
-    fn class(self, class: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("class"), AttrValues::Token(class)),
-            ..self
-        }
-    }
-
-    fn alt(self, _alt: trust::AttrValue) -> Self {
-        self
-    }
-    fn title(self, title: trust::AttrValue) -> Self {
-        Self {
-            attrs: self
-                .attrs
-                .add(AttrKey::from_str("title"), AttrValues::Token(title)),
-            ..self
-        }
-    }
 }
 
 impl FlowContent for Div {}
+
+pub struct Img {
+    attrs: AttrHashMap,
+}
+impl Img {
+    pub fn new(attrs: Attributes<Image>) -> Self {
+        Self { attrs: attrs.table }
+    }
+}
+impl Node for Img {
+    fn to_irnode(&self) -> IRNode {
+        IRNode::new(
+            TagName::from_str("img"),
+            self.attrs.clone(),
+            ElementType::Void,
+            vec![],
+        )
+    }
+}
+impl FlowContent for Img {}

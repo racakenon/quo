@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use crate::html::trust::{self, SafeString};
 #[derive(Clone)]
@@ -74,5 +74,74 @@ impl AttrHashMap {
                 _ => "".to_string(),
             })
             .collect()
+    }
+}
+
+pub mod attr_types {
+    pub trait ForGlobal {}
+    pub trait ForImage: ForGlobal {}
+}
+
+pub struct Global;
+impl attr_types::ForGlobal for Global {}
+
+pub struct Image;
+impl attr_types::ForGlobal for Image {}
+impl attr_types::ForImage for Image {}
+
+pub struct Attributes<T> {
+    pub table: AttrHashMap,
+    _marker: PhantomData<T>,
+}
+
+pub struct AttrBuilder;
+impl AttrBuilder {
+    pub fn global() -> Attributes<Global> {
+        Attributes {
+            table: AttrHashMap::new(),
+            _marker: PhantomData,
+        }
+    }
+    pub fn image() -> Attributes<Image> {
+        Attributes {
+            table: AttrHashMap::new(),
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T: attr_types::ForGlobal> Attributes<T> {
+    pub fn id(mut self, id: trust::AttrValue) -> Self {
+        self.table = self
+            .table
+            .add(trust::AttrKey::from_str("id"), AttrValues::Token(id));
+        self
+    }
+    pub fn class(mut self, class: trust::AttrValue) -> Self {
+        self.table = self
+            .table
+            .add(trust::AttrKey::from_str("class"), AttrValues::Token(class));
+        self
+    }
+    pub fn title(mut self, title: trust::AttrValue) -> Self {
+        self.table = self
+            .table
+            .add(trust::AttrKey::from_str("title"), AttrValues::Token(title));
+        self
+    }
+}
+
+impl<T: attr_types::ForImage> Attributes<T> {
+    pub fn src(mut self, src: trust::AttrValue) -> Self {
+        self.table = self
+            .table
+            .add(trust::AttrKey::from_str("src"), AttrValues::Token(src));
+        self
+    }
+    pub fn alt(mut self, alt: trust::AttrValue) -> Self {
+        self.table = self
+            .table
+            .add(trust::AttrKey::from_str("alt"), AttrValues::Token(alt));
+        self
     }
 }

@@ -7,11 +7,6 @@ use crate::html::trust::TagName;
 
 pub trait Node {
     fn to_irnode(&self) -> IRNode;
-    fn id(self, id: trust::AttrValue) -> Self;
-    fn class(self, class: trust::AttrValue) -> Self;
-    fn alt(self, class: trust::AttrValue) -> Self;
-    fn title(self, class: trust::AttrValue) -> Self;
-    //TODO other global attrs
 }
 
 #[derive(Clone)]
