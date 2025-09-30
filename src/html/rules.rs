@@ -17,7 +17,7 @@ pub struct SanitizationRules {
 }
 
 impl SanitizationRules {
-    pub fn from_files<P: AsRef<Path>>(
+    fn from_files<P: AsRef<Path>>(
         invisible_path: P,
         ambiguous_path: P,
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -65,7 +65,7 @@ impl SanitizationRules {
         })
     }
 
-    pub fn get_invisible_chars(&self, locale: &str) -> HashSet<char> {
+    fn get_invisible_chars(&self, locale: &str) -> HashSet<char> {
         let mut result = HashSet::new();
 
         if let Some(common_chars) = self.invisible_chars.get("_common") {
@@ -85,7 +85,7 @@ impl SanitizationRules {
         result
     }
 
-    pub fn get_ambiguous_pairs(&self, locale: &str) -> &HashMap<char, char> {
+    fn get_ambiguous_pairs(&self, locale: &str) -> &HashMap<char, char> {
         if let Some(locale_map) = self.ambiguous_map.get(locale) {
             return locale_map;
         }
@@ -111,7 +111,7 @@ impl SanitizationRules {
 }
 
 lazy_static! {
-    pub static ref RULES: SanitizationRules = {
+    static ref RULES: SanitizationRules = {
         SanitizationRules::from_files(
             "src/html/invisibleCharacters.json",
             "src/html/ambiguous.json",

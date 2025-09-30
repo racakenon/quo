@@ -9,7 +9,7 @@ pub struct Content(String);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AttrValue(String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash,PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AttrKey(String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,7 +74,7 @@ impl SafeString for AttrValue {
 }
 
 impl AttrKey {
-    pub(crate) fn from_str(key: &str) -> Self {
+    pub fn from_str(key: &str) -> Self {
         AttrKey(key.to_string())
     }
     pub fn as_str(&self) -> &str {
@@ -83,7 +83,7 @@ impl AttrKey {
 }
 
 impl HtmlBlock {
-    pub(crate) fn from_str(block: &str) -> Self {
+    pub fn from_str(block: &str) -> Self {
         HtmlBlock(block.to_string())
     }
     pub fn as_str(&self) -> &str {
