@@ -6,10 +6,10 @@ use crate::html::rules;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Content(String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AttrValue(String);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash,PartialOrd, Ord)]
 pub struct AttrKey(String);
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,12 +1,35 @@
-use std::{collections::HashMap, fmt::Write, marker::PhantomData};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Write,
+    marker::PhantomData,
+};
 
-use crate::html::trust::{self, SafeString};
+use crate::html::{
+    rules,
+    trust::{self, AttrValue, SafeString},
+};
 #[derive(Clone)]
 pub enum AttrValues {
     Token(trust::AttrValue),
     Bool(bool),
+    Set(HashSet<trust::AttrValue>),
     List(Vec<trust::AttrValue>),
 }
+
+impl AttrValues {
+    pub fn build_set<T>(list: Vec<String>, rule: &T) -> HashSet<AttrValue>
+    where
+        T: rules::Rules,
+    {
+        let set = list
+            .into_iter()
+            .map(|s| AttrValue::from_str(&s, rule))
+            .collect();
+        set
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum MergeMode {
     Keep,
     Force,
@@ -41,7 +64,8 @@ impl AttrHashMap {
             .collect()
     }
 
-    pub fn merge(self, map: AttrHashMap, mode: MergeMode) -> Self {
+    pub fn merge(self, map: &AttrHashMap, mode: MergeMode) -> Self {
+        let map = map.clone();
         let mut table = self.table;
 
         match mode {
@@ -60,13 +84,28 @@ impl AttrHashMap {
 
     pub fn into_string(&self) -> String {
         let mut result = String::new();
-        for (k, v) in &self.table {
+        let mut sorted_attrs: Vec<_> = self.table.iter().collect();
+        sorted_attrs.sort_by_key(|(k, _)| *k);
+        for (k, v) in sorted_attrs {
             match v {
                 AttrValues::Token(val) => {
                     let _ = write!(result, r#" {}="{}""#, k.as_str(), val.as_str());
                 }
                 AttrValues::Bool(true) => {
                     let _ = write!(result, " {}", k.as_str());
+                }
+                AttrValues::Set(classes) => {
+                    if classes.is_empty() {
+                        continue;
+                    }
+                    let mut sorted_classes: Vec<_> = classes.iter().collect();
+                    sorted_classes.sort();
+                    let class_string = sorted_classes
+                        .iter()
+                        .map(|c| c.as_str())
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    let _ = write!(result, r#" {}="{}""#, k.as_str(), &class_string);
                 }
                 _ => (),
             }
@@ -109,37 +148,72 @@ impl AttrBuilder {
 }
 
 impl<T: attr_types::ForGlobal> Attributes<T> {
-    pub fn id(mut self, id: trust::AttrValue) -> Self {
-        self.table = self
+    pub fn id(self, id: trust::AttrValue) -> Self {
+        let table = self
             .table
             .add(trust::AttrKey::from_str("id"), AttrValues::Token(id));
-        self
+        Attributes {
+            table,
+            _marker: self._marker,
+        }
     }
-    pub fn class(mut self, class: trust::AttrValue) -> Self {
-        self.table = self
-            .table
-            .add(trust::AttrKey::from_str("class"), AttrValues::Token(class));
-        self
+
+    pub fn class(self, classes: HashSet<trust::AttrValue>) -> Self {
+        let class_key = trust::AttrKey::from_str("class");
+        let mut classes = classes;
+
+        if let Some(existing_attr) = self.table.get(&class_key) {
+            match existing_attr {
+                AttrValues::Token(token) => {
+                    classes.insert(token.clone());
+                }
+                AttrValues::Set(existing_set) => {
+                    classes.extend(existing_set.iter().cloned());
+                }
+                AttrValues::List(attr_values) => {
+                    let existing_list = attr_values.clone();
+                    classes.extend(existing_list);
+                }
+                AttrValues::Bool(_) => unreachable!("Class attribute cannot be a boolean."),
+            }
+        }
+
+        let new_table = self.table.add(class_key, AttrValues::Set(classes));
+
+        Attributes {
+            table: new_table,
+            _marker: self._marker,
+        }
     }
-    pub fn title(mut self, title: trust::AttrValue) -> Self {
-        self.table = self
+
+    pub fn title(self, title: trust::AttrValue) -> Self {
+        let table = self
             .table
             .add(trust::AttrKey::from_str("title"), AttrValues::Token(title));
-        self
+        Attributes {
+            table,
+            _marker: self._marker,
+        }
     }
 }
 
 impl<T: attr_types::ForImage> Attributes<T> {
-    pub fn src(mut self, src: trust::AttrValue) -> Self {
-        self.table = self
+    pub fn src(self, src: trust::AttrValue) -> Self {
+        let table = self
             .table
             .add(trust::AttrKey::from_str("src"), AttrValues::Token(src));
-        self
+        Attributes {
+            table,
+            _marker: self._marker,
+        }
     }
-    pub fn alt(mut self, alt: trust::AttrValue) -> Self {
-        self.table = self
+    pub fn alt(self, alt: trust::AttrValue) -> Self {
+        let table = self
             .table
             .add(trust::AttrKey::from_str("alt"), AttrValues::Token(alt));
-        self
+        Attributes {
+            table,
+            _marker: self._marker,
+        }
     }
 }
