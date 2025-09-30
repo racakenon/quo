@@ -29,23 +29,8 @@ fn main() {
         vec![Box::new(title_node), Box::new(logo_node)], 
         container_attrs,
     );
-    // let en = rules::DefaultPunc::en_dash();
-    // let elipis = rules::DefaultPunc::ellipsis();
-    // let heading = H1::new(&format!("Welcome yo{en}koso to Safe HTML Builder!",), &rule)
-    //     .id(AttrValue::from_str("main-title", &rule))
-    //     .title(AttrValue::from_str("A welcoming title", &rule));
-    //
-    // let container = Div::new(vec![heading.clone()])
-    //     .id(AttrValue::from_str("container", &rule))
-    //     .class(AttrValue::from_str("wrapper", &rule));
-    //
     let initial_rederer = HtmlRenderer::new();
     let final_html = header_container.to_irnode();
     let temp_renderer = final_html.accept(initial_rederer);
     println!("{}", temp_renderer.finalize());
-    //
-    // let malicious_heading = H2::new(&format!("<script>alert('XSS')\"qi'to 'I know' \"</script>{elipis}"), &rule);
-    // let mailcious_html = malicious_heading.to_irnode();
-    // let continue_rendering = mailcious_html.accept(temp_renderer);
-    // println!("{}", continue_rendering.finalize());
 }

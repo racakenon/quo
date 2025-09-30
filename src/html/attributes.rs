@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::{collections::HashMap, fmt::Write, marker::PhantomData};
 
 use crate::html::trust::{self, SafeString};
 #[derive(Clone)]
@@ -46,34 +46,32 @@ impl AttrHashMap {
 
         match mode {
             MergeMode::Keep => {
-                for (k, v) in map.all() {
+                for (k, v) in map.table.into_iter() {
                     table.entry(k).or_insert(v);
                 }
             }
             MergeMode::Force => {
-                table.extend(map.all());
+                table.extend(map.table.into_iter());
             }
         }
 
         AttrHashMap { table }
     }
 
-    pub fn to_str(&self) -> String {
-        self.all()
-            .iter()
-            .map(|(k, v)| match v {
+    pub fn into_string(&self) -> String {
+        let mut result = String::new();
+        for (k, v) in &self.table {
+            match v {
                 AttrValues::Token(val) => {
-                    let k = k.clone();
-                    let val = val.clone();
-                    format!(r#" {}="{}""#, k.to_str(), val.to_str())
+                    let _ = write!(result, r#" {}="{}""#, k.as_str(), val.as_str());
                 }
                 AttrValues::Bool(true) => {
-                    let k = k.clone();
-                    format!(" {}", k.to_str())
+                    let _ = write!(result, " {}", k.as_str());
                 }
-                _ => "".to_string(),
-            })
-            .collect()
+                _ => (),
+            }
+        }
+        result
     }
 }
 

@@ -85,28 +85,28 @@ impl SanitizationRules {
         result
     }
 
-    pub fn get_ambiguous_pairs(&self, locale: &str) -> HashMap<char, char> {
+    pub fn get_ambiguous_pairs(&self, locale: &str) -> &HashMap<char, char> {
         if let Some(locale_map) = self.ambiguous_map.get(locale) {
-            return locale_map.clone();
+            return locale_map;
         }
 
         if locale.contains('-') {
             if let Some(lang_code) = locale.split('-').next() {
                 if let Some(lang_map) = self.ambiguous_map.get(lang_code) {
-                    return lang_map.clone();
+                    return &lang_map;
                 }
             }
         }
 
         if let Some(default_map) = self.ambiguous_map.get("_default") {
-            return default_map.clone();
+            return &default_map;
         }
 
         if let Some(common_map) = self.ambiguous_map.get("_common") {
-            return common_map.clone();
+            return &common_map;
         }
 
-        HashMap::new()
+        &EMPTY_AMBIGUOUS_MAP
     }
 }
 
@@ -118,6 +118,7 @@ lazy_static! {
         )
         .expect("Failed to load sanitization rule files")
     };
+    static ref EMPTY_AMBIGUOUS_MAP: HashMap<char, char> = HashMap::new();
 }
 
 pub enum RuleList {

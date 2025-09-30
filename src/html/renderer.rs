@@ -7,7 +7,7 @@ pub trait Renderer: Clone {
     fn visit_node_end(&self, node: &IRNode) -> Self;
     fn visit_text(&self, content: &Content) -> Self;
     fn visit_raw(&self, html: &HtmlBlock) -> Self;
-    fn finalize(&self) -> Self::Output;
+    fn finalize(&self) -> &Self::Output;
 }
 
 #[derive(Clone)]
@@ -26,11 +26,11 @@ impl Renderer for HtmlRenderer {
     type Output = HtmlBlock;
 
     fn visit_node_begin(&self, node: &IRNode) -> Self {
-        let mut buffer = self.buffer.to_str();
+        let mut buffer = self.buffer.as_str().to_string();
 
         buffer.push('<');
-        buffer.push_str(&node.get_tag());
-        buffer.push_str(&node.get_attrs());
+        buffer.push_str(&node.get_tag().as_str());
+        buffer.push_str(&node.get_attrs().into_string());
 
         match node.get_type() {
             ElementType::Void => {
@@ -47,12 +47,12 @@ impl Renderer for HtmlRenderer {
     }
 
     fn visit_node_end(&self, node: &IRNode) -> Self {
-        let mut buffer = self.buffer.to_str();
+        let mut buffer = self.buffer.as_str().to_string();
 
         match node.get_type() {
             ElementType::Normal => {
                 buffer.push_str("</");
-                buffer.push_str(&node.get_tag());
+                buffer.push_str(&node.get_tag().as_str());
                 buffer.push('>');
             }
             ElementType::Void => {
@@ -65,8 +65,8 @@ impl Renderer for HtmlRenderer {
     }
 
     fn visit_text(&self, content: &Content) -> Self {
-        let mut buffer = self.buffer.to_str();
-        buffer.push_str(&content.to_str());
+        let mut buffer = self.buffer.as_str().to_string();
+        buffer.push_str(&content.as_str());
 
         HtmlRenderer {
             buffer: HtmlBlock::from_str(&buffer),
@@ -74,15 +74,15 @@ impl Renderer for HtmlRenderer {
     }
 
     fn visit_raw(&self, html: &HtmlBlock) -> Self {
-        let mut buffer = self.buffer.to_str();
-        buffer.push_str(&html.to_str());
+        let mut buffer = self.buffer.as_str().to_string();
+        buffer.push_str(&html.as_str());
 
         HtmlRenderer {
             buffer: HtmlBlock::from_str(&buffer),
         }
     }
 
-    fn finalize(&self) -> Self::Output {
-        self.buffer.clone()
+    fn finalize(&self) -> &Self::Output {
+        &self.buffer
     }
 }

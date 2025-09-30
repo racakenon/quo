@@ -1,3 +1,4 @@
+use core::str;
 use std::fmt::Display;
 
 use crate::html::rules;
@@ -21,36 +22,32 @@ pub trait SafeString: Sized {
     fn from_str<T>(s: &str, rule: &T) -> Self
     where
         T: rules::Rules;
-    fn to_str(&self) -> String;
+    fn as_str(&self) -> &str;
 }
 impl Display for Content {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let content = self.clone().to_str();
-        write!(f, "{}", content)
+        write!(f, "{}", self.as_str())
     }
 }
 
 impl Display for AttrKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let content = self.clone().to_str();
-        write!(f, "{}", content)
+        write!(f, "{}", self.as_str())
     }
 }
 impl Display for AttrValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let content = self.clone().to_str();
-        write!(f, "{}", content)
+        write!(f, "{}", self.as_str())
     }
 }
 impl Display for HtmlBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let content = self.clone().to_str();
-        write!(f, "{}", content)
+        write!(f, "{}", self.as_str())
     }
 }
 impl SafeString for Content {
-    fn to_str(&self) -> String {
-        self.0.clone()
+    fn as_str(&self) -> &str {
+        &self.0
     }
 
     fn from_str<T>(s: &str, rule: &T) -> Self
@@ -63,8 +60,8 @@ impl SafeString for Content {
 }
 
 impl SafeString for AttrValue {
-    fn to_str(&self) -> String {
-        self.0.clone()
+    fn as_str(&self) -> &str {
+        &self.0
     }
 
     fn from_str<T>(s: &str, rule: &T) -> Self
@@ -80,8 +77,8 @@ impl AttrKey {
     pub(crate) fn from_str(key: &str) -> Self {
         AttrKey(key.to_string())
     }
-    pub fn to_str(self) -> String {
-        self.0
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -89,8 +86,8 @@ impl HtmlBlock {
     pub(crate) fn from_str(block: &str) -> Self {
         HtmlBlock(block.to_string())
     }
-    pub fn to_str(&self) -> String {
-        self.0.clone()
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -98,8 +95,8 @@ impl TagName {
     pub(crate) fn from_str(block: &str) -> Self {
         TagName(block.to_string())
     }
-    pub fn to_str(self) -> String {
-        self.0
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
