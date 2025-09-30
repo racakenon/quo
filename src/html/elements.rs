@@ -1,7 +1,6 @@
 use crate::html::attributes::{AttrHashMap, Attributes, Global, Image};
 use crate::html::node::{Element, ElementType, FlowContent, Heading, IRNode, Node};
-use crate::html::rules::{self, Rules};
-use crate::html::trust::{self, SafeString, TagName};
+use crate::html::trust::{self, Content, TagName};
 
 #[derive(Clone)]
 pub struct H1 {
@@ -10,13 +9,10 @@ pub struct H1 {
 }
 
 impl H1 {
-    pub fn new<T>(text: &str, rule: &T, attrs: Attributes<Global>) -> Self
-    where
-        T: Rules,
-    {
+    pub fn new(attrs: Attributes<Global>, content: Content) -> Self {
         H1 {
             attrs: attrs.table,
-            content: trust::Content::from_str(text, rule),
+            content: content,
         }
     }
 }
@@ -42,13 +38,11 @@ pub struct H2 {
 }
 
 impl H2 {
-    pub fn new<T>(text: &str, rule: &T, attrs: Attributes<Global>) -> Self
-    where
-        T: rules::Rules,
+    pub fn new(attrs: Attributes<Global>, content: Content) -> Self
     {
         H2 {
             attrs: attrs.table,
-            content: trust::Content::from_str(text, rule),
+            content,
         }
     }
 }
@@ -64,6 +58,8 @@ impl Node for H2 {
     }
 }
 
+impl FlowContent for H2 {}
+
 #[derive(Clone)]
 pub struct Div {
     attrs: AttrHashMap,
@@ -71,10 +67,10 @@ pub struct Div {
 }
 
 impl Div {
-    pub fn new(children: Vec<Box<dyn FlowContent>>, attr: Attributes<Global>) -> Self {
+    pub fn new(attrs: Attributes<Global>, childs: Vec<Box<dyn FlowContent>>) -> Self {
         Div {
-            attrs: attr.table,
-            childs: children
+            attrs: attrs.table,
+            childs: childs
                 .iter()
                 .map(|c| Element::Node(c.to_irnode()))
                 .collect(),

@@ -119,13 +119,16 @@ pub mod attr_types {
     pub trait ForImage: ForGlobal {}
 }
 
+#[derive(Clone)]
 pub struct Global;
 impl attr_types::ForGlobal for Global {}
 
+#[derive(Clone)]
 pub struct Image;
 impl attr_types::ForGlobal for Image {}
 impl attr_types::ForImage for Image {}
 
+#[derive(Clone)]
 pub struct Attributes<T> {
     pub table: AttrHashMap,
     _marker: PhantomData<T>,
