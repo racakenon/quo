@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fmt::Write,
-    marker::PhantomData,
+    marker::PhantomData, sync::Arc,
 };
 
 use crate::html::{
@@ -33,6 +33,33 @@ impl AttrValues {
 pub enum MergeMode {
     Keep,
     Force,
+}
+
+#[derive(Clone)]
+pub struct SharedAttrs(Arc<AttrHashMap>);
+
+impl SharedAttrs {
+    pub fn new() -> Self {
+        SharedAttrs(Arc::new(AttrHashMap::new()))
+    }
+    
+    pub fn from_map(map: AttrHashMap) -> Self {
+        SharedAttrs(Arc::new(map))
+    }
+    
+    pub fn get(&self) -> &AttrHashMap {
+        &self.0
+    }
+    
+    pub fn with_added(&self, k: trust::AttrKey, v: AttrValues) -> Self {
+        let mut new_map = (*self.0).clone();
+        new_map = new_map.add(k, v);
+        SharedAttrs(Arc::new(new_map))
+    }
+    
+    pub fn into_string(&self) -> String {
+        self.0.into_string()
+    }
 }
 
 #[derive(Clone)]

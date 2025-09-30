@@ -17,7 +17,6 @@ fn main() {
         .id(AttrValue::from_str("main_tilte", &rule))
         .class(title_class);
 
-    let subtitle_attrs = title_attrs.clone();
     let logo_class = AttrValues::build_set(vec!["site-logo".to_string()], &rule);
     let logo_attrs = AttrBuilder::image()
         .src(AttrValue::from_str("/images/logo.svg", &rule))
@@ -27,8 +26,8 @@ fn main() {
     let container_class = AttrValues::build_set(vec!["container".to_string()], &rule);
     let container_attrs = AttrBuilder::global().class(container_class);
 
-    let title_node = H1::new(title_attrs, Content::from_str("나의 정적 사이트", &rule));
-    let subtitle_node = H2::new(subtitle_attrs, Content::from_str("나의 정적 사이트", &rule));
+    let title_node = H1::new(title_attrs.clone(), Content::from_str("나의 정적 사이트", &rule));
+    let subtitle_node = H2::new(title_attrs.clone(), Content::from_str("나의 정적 사이트", &rule));
     let logo_node = Img::new(logo_attrs);
 
     let header_container = Div::new(

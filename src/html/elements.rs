@@ -1,17 +1,17 @@
-use crate::html::attributes::{AttrHashMap, Attributes, Global, Image};
+use crate::html::attributes::{Attributes, Global, Image, SharedAttrs};
 use crate::html::node::{Element, ElementType, FlowContent, Heading, IRNode, Node};
 use crate::html::trust::{self, Content, TagName};
 
 #[derive(Clone)]
 pub struct H1 {
-    attrs: AttrHashMap,
+    attrs: SharedAttrs,
     content: trust::Content,
 }
 
 impl H1 {
     pub fn new(attrs: Attributes<Global>, content: Content) -> Self {
         H1 {
-            attrs: attrs.table,
+            attrs: SharedAttrs::from_map(attrs.table),
             content: content,
         }
     }
@@ -33,15 +33,14 @@ impl Heading for H1 {}
 
 #[derive(Clone)]
 pub struct H2 {
-    attrs: AttrHashMap,
+    attrs: SharedAttrs,
     content: trust::Content,
 }
 
 impl H2 {
-    pub fn new(attrs: Attributes<Global>, content: Content) -> Self
-    {
+    pub fn new(attrs: Attributes<Global>, content: Content) -> Self {
         H2 {
-            attrs: attrs.table,
+            attrs: SharedAttrs::from_map(attrs.table),
             content,
         }
     }
@@ -62,14 +61,14 @@ impl FlowContent for H2 {}
 
 #[derive(Clone)]
 pub struct Div {
-    attrs: AttrHashMap,
+    attrs: SharedAttrs,
     childs: Vec<Element>,
 }
 
 impl Div {
     pub fn new(attrs: Attributes<Global>, childs: Vec<Box<dyn FlowContent>>) -> Self {
         Div {
-            attrs: attrs.table,
+            attrs: SharedAttrs::from_map(attrs.table),
             childs: childs
                 .iter()
                 .map(|c| Element::Node(c.to_irnode()))
@@ -92,11 +91,13 @@ impl Node for Div {
 impl FlowContent for Div {}
 
 pub struct Img {
-    attrs: AttrHashMap,
+    attrs: SharedAttrs,
 }
 impl Img {
     pub fn new(attrs: Attributes<Image>) -> Self {
-        Self { attrs: attrs.table }
+        Img {
+            attrs: SharedAttrs::from_map(attrs.table),
+        }
     }
 }
 impl Node for Img {

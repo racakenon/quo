@@ -1,4 +1,4 @@
-use crate::html::attributes::AttrHashMap;
+use crate::html::attributes::SharedAttrs;
 use crate::html::renderer::Renderer;
 use crate::html::trust::Content;
 use crate::html::trust::HtmlBlock;
@@ -24,7 +24,7 @@ pub enum ElementType {
 #[derive(Clone)]
 pub struct IRNode {
     tag: TagName,
-    attrs: AttrHashMap,
+    attrs: SharedAttrs,
     tagtype: ElementType,
     childs: Vec<Element>,
 }
@@ -32,7 +32,7 @@ pub struct IRNode {
 impl IRNode {
     pub fn new(
         tag: TagName,
-        attrs: AttrHashMap,
+        attrs: SharedAttrs,
         tagtype: ElementType,
         childs: Vec<Element>,
     ) -> Self {
@@ -48,7 +48,7 @@ impl IRNode {
         &self.tag
     }
 
-    pub fn get_attrs(&self) -> &AttrHashMap {
+    pub fn get_attrs(&self) -> &SharedAttrs {
         &self.attrs
     }
 
